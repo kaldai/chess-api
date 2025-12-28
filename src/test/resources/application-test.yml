@@ -1,4 +1,3 @@
-# src/test/resources/application-test.yml
 spring:
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
@@ -8,22 +7,20 @@ spring:
   
   jpa:
     hibernate:
-      ddl-auto: create-drop  # Пусть Hibernate сам создает таблицы
+      ddl-auto: create-drop
     properties:
       hibernate:
         dialect: org.hibernate.dialect.H2Dialect
-        format_sql: true
+        format_sql: false
     show-sql: false
   
-  # Отключим SQL инициализацию в тестах
   sql:
     init:
       mode: never
   
+  # Отключаем security для тестов
   security:
-    user:
-      name: test
-      password: test
+    enabled: false
   
   main:
     allow-bean-definition-overriding: true
@@ -33,10 +30,17 @@ server:
 
 logging:
   level:
-    com.chess.api: WARN
-    org.springframework: WARN
+    com.chess.api: DEBUG
+    org.springframework: INFO
+    org.springframework.test: DEBUG
     org.hibernate: WARN
+    org.springframework.security: INFO
 
 jwt:
-  secret: test-secret-key-for-jwt-in-tests
+  secret: test-secret-key-for-jwt-in-tests-that-needs-to-be-long-enough-32-chars
   expiration: 86400000
+
+# Отключаем WebSocket для тестов
+chess:
+  websocket:
+    enabled: false
