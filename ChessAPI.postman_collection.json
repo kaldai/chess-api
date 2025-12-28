@@ -1,0 +1,623 @@
+{
+  "info": {
+    "_postman_id": "chess-api-full-collection",
+    "name": "Chess API (Full)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Полная коллекция для тестирования API многопользовательских шахмат с аутентификацией"
+  },
+  "item": [
+    {
+      "name": "🟢 Authentication",
+      "item": [
+        {
+          "name": "✅ Register Player 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"player1_test\",\n  \"email\": \"player1@test.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Регистрация первого тестового игрока"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Register Player 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"player2_test\",\n  \"email\": \"player2@test.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": "Регистрация второго тестового игрока"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Login Player 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"player1_test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Вход первого игрока и получение токена"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Login Player 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"player2_test\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": "Вход второго игрока и получение токена"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👥 Players",
+      "item": [
+        {
+          "name": "📋 Get All Players",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/players",
+            "description": "Получение списка всех игроков"
+          },
+          "response": []
+        },
+        {
+          "name": "🏆 Get Top Players",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/players/top?gameType=BLITZ&limit=10",
+            "description": "Получение топа игроков по рейтингу"
+          },
+          "response": []
+        },
+        {
+          "name": "🧪 Create Test Player",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/players/test",
+            "description": "Создание тестового игрока (без аутентификации)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🎮 Games",
+      "item": [
+        {
+          "name": "🆕 Create Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gameType\": \"BLITZ\",\n  \"isPublic\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/games",
+            "description": "Создание новой шахматной игры"
+          },
+          "response": []
+        },
+        {
+          "name": "📋 Get All Games",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games",
+            "description": "Получение списка всех игр"
+          },
+          "response": []
+        },
+        {
+          "name": "🔍 Get Game by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}",
+            "description": "Получение информации об игре по ID"
+          },
+          "response": []
+        },
+        {
+          "name": "🎯 Get Active Games",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/active",
+            "description": "Получение списка активных игр текущего пользователя"
+          },
+          "response": []
+        },
+        {
+          "name": "⏳ Get Waiting Games",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/waiting",
+            "description": "Получение списка игр, ожидающих второго игрока"
+          },
+          "response": []
+        },
+        {
+          "name": "📜 Get Game History",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/history?limit=10",
+            "description": "Получение истории игр текущего пользователя"
+          },
+          "response": []
+        },
+        {
+          "name": "🤝 Join Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/join",
+            "description": "Присоединение второго игрока к существующей игре"
+          },
+          "response": []
+        },
+        {
+          "name": "🏃 Make Move",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"e2\",\n  \"to\": \"e4\"\n}"
+            },
+            "url": "{{baseUrl}}/api/games/{{gameId}}/move",
+            "description": "Совершение хода в игре"
+          },
+          "response": []
+        },
+        {
+          "name": "📝 Get Game Moves",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/moves",
+            "description": "Получение истории ходов игры"
+          },
+          "response": []
+        },
+        {
+          "name": "⚖️ Get Legal Moves",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/legal-moves?square=e2",
+            "description": "Получение списка легальных ходов для фигуры"
+          },
+          "response": []
+        },
+        {
+          "name": "⏰ Get Time Left",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/time-left",
+            "description": "Получение оставшегося времени у игроков"
+          },
+          "response": []
+        },
+        {
+          "name": "🏳️ Resign Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/resign",
+            "description": "Сдача в игре"
+          },
+          "response": []
+        },
+        {
+          "name": "🤝 Offer Draw",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/draw-offer",
+            "description": "Предложение ничьей"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Accept Draw",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/draw-accept",
+            "description": "Принятие предложения ничьей"
+          },
+          "response": []
+        },
+        {
+          "name": "⏸️ Pause Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/pause",
+            "description": "Приостановка игры"
+          },
+          "response": []
+        },
+        {
+          "name": "▶️ Resume Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/resume",
+            "description": "Возобновление игры"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "📨 Game Invites",
+      "item": [
+        {
+          "name": "📤 Invite Player",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"playerId\": {{player2Id}},\n  \"gameType\": \"BLITZ\"\n}"
+            },
+            "url": "{{baseUrl}}/api/games/invite",
+            "description": "Отправка приглашения на игру"
+          },
+          "response": []
+        },
+        {
+          "name": "📥 Get My Invites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites",
+            "description": "Получение списка полученных приглашений"
+          },
+          "response": []
+        },
+        {
+          "name": "✅ Accept Invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites/{{inviteId}}/accept",
+            "description": "Принятие приглашения на игру"
+          },
+          "response": []
+        },
+        {
+          "name": "❌ Reject Invite",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites/{{inviteId}}/reject",
+            "description": "Отклонение приглашения на игру"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🔄 Complete Game Flow (Test Scenario)",
+      "item": [
+        {
+          "name": "1️⃣ Setup Players",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Сохраняем токены в переменные окружения",
+                  "if (pm.response.code === 200) {",
+                  "  const jsonData = pm.response.json();",
+                  "  if (jsonData.success) {",
+                  "    const token = jsonData.data.token;",
+                  "    const playerId = jsonData.data.id || jsonData.data.player?.id;",
+                  "    ",
+                  "    // Определяем какой игрок регистрируется по username",
+                  "    const username = pm.request.body.raw ? JSON.parse(pm.request.body.raw).username : '';",
+                  "    ",
+                  "    if (username.includes('player1')) {",
+                  "      pm.environment.set('player1Token', token);",
+                  "      if (playerId) pm.environment.set('player1Id', playerId);",
+                  "      console.log('Player 1 token saved:', token);",
+                  "    } else if (username.includes('player2')) {",
+                  "      pm.environment.set('player2Token', token);",
+                  "      if (playerId) pm.environment.set('player2Id', playerId);",
+                  "      console.log('Player 2 token saved:', token);",
+                  "    }",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"test_player_1\",\n  \"email\": \"test1@example.com\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": "{{baseUrl}}/api/auth/register"
+          },
+          "response": []
+        },
+        {
+          "name": "2️⃣ Create Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"gameType\": \"BLITZ\",\n  \"isPublic\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/games"
+          },
+          "response": []
+        },
+        {
+          "name": "3️⃣ Join Game",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}/join"
+          },
+          "response": []
+        },
+        {
+          "name": "4️⃣ Make First Move",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"from\": \"e2\",\n  \"to\": \"e4\"\n}"
+            },
+            "url": "{{baseUrl}}/api/games/{{gameId}}/move"
+          },
+          "response": []
+        },
+        {
+          "name": "5️⃣ Get Game State",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/{{gameId}}"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080",
+      "type": "string"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    },
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          ""
+        ]
+      }
+    }
+  ]
+}
