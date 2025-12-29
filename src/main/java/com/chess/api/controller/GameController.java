@@ -9,6 +9,7 @@ import com.chess.api.dto.MoveDTO;
 import com.chess.api.dto.MoveRequest;
 import com.chess.api.dto.PlayerDTO;
 import com.chess.api.model.Game;
+import com.chess.api.model.GameInvite;
 import com.chess.api.model.Player;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.service.ChessGameService;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,7 +45,7 @@ public class GameController {
   @PostMapping
   public ResponseEntity<ApiResponse<GameDTO>> createGame(
       @Valid @RequestBody GameCreateRequest request,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено на UserDetails
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     // Загружаем полного игрока из базы данных
     Player creator = playerService.getPlayerByUsername(userDetails.getUsername());
@@ -69,7 +71,7 @@ public class GameController {
 
   @GetMapping("/active")
   public ResponseEntity<ApiResponse<List<GameDTO>>> getActiveGames(
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     List<Game> games = gameService.getActiveGames(currentPlayer);
@@ -87,7 +89,7 @@ public class GameController {
   @PostMapping("/{id}/join")
   public ResponseEntity<ApiResponse<GameDTO>> joinGame(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     Game game = gameService.joinGame(id, currentPlayer);
@@ -105,7 +107,7 @@ public class GameController {
   public ResponseEntity<ApiResponse<MoveDTO>> makeMove(
       @PathVariable Long id,
       @Valid @RequestBody MoveRequest moveRequest,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     try {
       Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
@@ -126,33 +128,33 @@ public class GameController {
   @PostMapping("/{id}/resign")
   public ResponseEntity<ApiResponse<Void>> resignGame(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.resignGame(id, currentPlayer);
     chessGameService.stopGameTimer(id);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Вы сдались", null));
+    return ResponseEntity.ok(ApiResponse.success("Вы сдались", null));
   }
 
   @PostMapping("/{id}/draw-offer")
   public ResponseEntity<ApiResponse<Void>> offerDraw(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.offerDraw(id, currentPlayer);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Предложение ничьи отправлено", null));
+    return ResponseEntity.ok(ApiResponse.success("Предложение ничьи отправлено", null));
   }
 
   @PostMapping("/{id}/draw-accept")
   public ResponseEntity<ApiResponse<Void>> acceptDraw(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.acceptDraw(id, currentPlayer);
     chessGameService.stopGameTimer(id);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Ничья принята", null));
+    return ResponseEntity.ok(ApiResponse.success("Ничья принята", null));
   }
 
   @GetMapping("/{id}/legal-moves")
@@ -174,26 +176,26 @@ public class GameController {
   @PostMapping("/{id}/pause")
   public ResponseEntity<ApiResponse<Void>> pauseGame(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.pauseGame(id, currentPlayer);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Игра приостановлена", null));
+    return ResponseEntity.ok(ApiResponse.success("Игра приостановлена", null));
   }
 
   @PostMapping("/{id}/resume")
   public ResponseEntity<ApiResponse<Void>> resumeGame(
       @PathVariable Long id,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.resumeGame(id, currentPlayer);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Игра возобновлена", null));
+    return ResponseEntity.ok(ApiResponse.success("Игра возобновлена", null));
   }
 
   @GetMapping("/history")
   public ResponseEntity<ApiResponse<List<GameDTO>>> getGameHistory(
-      @AuthenticationPrincipal UserDetails userDetails, // Изменено
+      @AuthenticationPrincipal UserDetails userDetails,
       @RequestParam(defaultValue = "10") int limit) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
@@ -203,18 +205,20 @@ public class GameController {
   }
 
   @PostMapping("/invite")
-  public ResponseEntity<ApiResponse<GameDTO>> invitePlayer(
+  public ResponseEntity<ApiResponse<GameInviteDTO>> invitePlayer(
       @Valid @RequestBody GameInviteRequest inviteRequest,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
-    Game game = gameService.invitePlayer(inviteRequest, currentPlayer);
-    return ResponseEntity.ok(ApiResponse.success("Приглашение отправлено", convertToDTO(game)));
+    GameInvite invite = gameService.invitePlayer(inviteRequest, currentPlayer);
+
+    GameInviteDTO inviteDTO = convertToInviteDTO(invite);
+    return ResponseEntity.ok(ApiResponse.success("Приглашение отправлено", inviteDTO));
   }
 
   @GetMapping("/invites")
   public ResponseEntity<ApiResponse<List<GameInviteDTO>>> getInvites(
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     List<GameInviteDTO> invites = gameService.getPlayerInvites(currentPlayer);
@@ -224,7 +228,7 @@ public class GameController {
   @PostMapping("/invites/{inviteId}/accept")
   public ResponseEntity<ApiResponse<GameDTO>> acceptInvite(
       @PathVariable Long inviteId,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     Game game = gameService.acceptInvite(inviteId, currentPlayer);
@@ -235,11 +239,30 @@ public class GameController {
   @PostMapping("/invites/{inviteId}/reject")
   public ResponseEntity<ApiResponse<Void>> rejectInvite(
       @PathVariable Long inviteId,
-      @AuthenticationPrincipal UserDetails userDetails) { // Изменено
+      @AuthenticationPrincipal UserDetails userDetails) {
 
     Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
     gameService.rejectInvite(inviteId, currentPlayer);
-    return ResponseEntity.ok(ApiResponse.<Void>success("Приглашение отклонено", null));
+    return ResponseEntity.ok(ApiResponse.success("Приглашение отклонено", null));
+  }
+
+  @GetMapping("/invites/sent")
+  public ResponseEntity<ApiResponse<List<GameInviteDTO>>> getSentInvites(
+      @AuthenticationPrincipal UserDetails userDetails) {
+
+    Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
+    List<GameInviteDTO> invites = gameService.getSentInvites(currentPlayer);
+    return ResponseEntity.ok(ApiResponse.success(invites));
+  }
+
+  @DeleteMapping("/invites/{inviteId}")
+  public ResponseEntity<ApiResponse<Void>> cancelInvite(
+      @PathVariable Long inviteId,
+      @AuthenticationPrincipal UserDetails userDetails) {
+
+    Player currentPlayer = playerService.getPlayerByUsername(userDetails.getUsername());
+    gameService.cancelInvite(inviteId, currentPlayer);
+    return ResponseEntity.ok(ApiResponse.success("Приглашение отменено", null));
   }
 
   private GameDTO convertToDTO(Game game) {
@@ -290,6 +313,29 @@ public class GameController {
         move.getBlackTimeLeft(),
         move.getTimestamp()
     );
+  }
+
+  private GameInviteDTO convertToInviteDTO(GameInvite invite) {
+    GameInviteDTO dto = new GameInviteDTO();
+    dto.setId(invite.getId());
+    dto.setSender(new PlayerDTO(
+        invite.getSender().getId(),
+        invite.getSender().getUsername(),
+        getRatingForGameType(invite.getSender(), invite.getGameType())
+    ));
+    dto.setReceiver(new PlayerDTO(
+        invite.getReceiver().getId(),
+        invite.getReceiver().getUsername(),
+        getRatingForGameType(invite.getReceiver(), invite.getGameType())
+    ));
+    dto.setGameType(invite.getGameType());
+    dto.setStatus(invite.getStatus());
+    dto.setTimeControl(invite.getTimeControl());
+    dto.setTimeIncrement(invite.getTimeIncrement());
+    dto.setSentAt(invite.getSentAt());
+    dto.setRespondedAt(invite.getRespondedAt());
+    dto.setGameId(invite.getGame() != null ? invite.getGame().getId() : null);
+    return dto;
   }
 
   private int getRatingForGameType(Player player, com.chess.api.model.enums.GameType gameType) {

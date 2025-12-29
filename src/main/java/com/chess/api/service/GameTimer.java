@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
+/**
+ * Таймеры с инкрементом.
+ */
 @Slf4j
 @Getter
 public class GameTimer implements Runnable {

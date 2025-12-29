@@ -68,6 +68,12 @@ public class Player {
   @OneToMany(mappedBy = "blackPlayer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
   private List<Game> gamesAsBlack = new ArrayList<>();
 
+  @OneToMany(mappedBy = "sender", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<GameInvite> sentInvites = new ArrayList<>();
+
+  @OneToMany(mappedBy = "receiver", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+  private List<GameInvite> receivedInvites = new ArrayList<>();
+
   @PrePersist
   protected void onCreate() {
     createdAt = LocalDateTime.now();

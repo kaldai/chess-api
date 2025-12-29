@@ -397,7 +397,7 @@
       "name": "📨 Game Invites",
       "item": [
         {
-          "name": "📤 Invite Player",
+          "name": "📤 Send Invite",
           "request": {
             "method": "POST",
             "header": [
@@ -415,12 +415,12 @@
               "raw": "{\n  \"playerId\": {{player2Id}},\n  \"gameType\": \"BLITZ\"\n}"
             },
             "url": "{{baseUrl}}/api/games/invite",
-            "description": "Отправка приглашения на игру"
+            "description": "Отправка приглашения на игру (возвращает GameInviteDTO)"
           },
           "response": []
         },
         {
-          "name": "📥 Get My Invites",
+          "name": "📥 Get Received Invites",
           "request": {
             "method": "GET",
             "header": [
@@ -435,6 +435,21 @@
           "response": []
         },
         {
+          "name": "📤 Get Sent Invites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites/sent",
+            "description": "Получение списка отправленных приглашений"
+          },
+          "response": []
+        },
+        {
           "name": "✅ Accept Invite",
           "request": {
             "method": "POST",
@@ -445,7 +460,7 @@
               }
             ],
             "url": "{{baseUrl}}/api/games/invites/{{inviteId}}/accept",
-            "description": "Принятие приглашения на игру"
+            "description": "Принятие приглашения на игру (создает игру)"
           },
           "response": []
         },
@@ -463,6 +478,21 @@
             "description": "Отклонение приглашения на игру"
           },
           "response": []
+        },
+        {
+          "name": "🗑️ Cancel Invite",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player1Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites/{{inviteId}}",
+            "description": "Отмена отправленного приглашения"
+          },
+          "response": []
         }
       ]
     },
@@ -470,21 +500,19 @@
       "name": "🔄 Complete Game Flow (Test Scenario)",
       "item": [
         {
-          "name": "1️⃣ Setup Players",
+          "name": "1️⃣ Setup Players & Get IDs",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "// Сохраняем токены в переменные окружения",
+                  "// Сохраняем токены и ID в переменные окружения",
                   "if (pm.response.code === 200) {",
                   "  const jsonData = pm.response.json();",
                   "  if (jsonData.success) {",
                   "    const token = jsonData.data.token;",
                   "    const playerId = jsonData.data.id || jsonData.data.player?.id;",
-                  "    ",
-                  "    // Определяем какой игрок регистрируется по username",
                   "    const username = pm.request.body.raw ? JSON.parse(pm.request.body.raw).username : '';",
                   "    ",
                   "    if (username.includes('player1')) {",
@@ -519,7 +547,26 @@
           "response": []
         },
         {
-          "name": "2️⃣ Create Game",
+          "name": "2️⃣ Create Game via Invite System",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Сохраняем ID приглашения",
+                  "if (pm.response.code === 200) {",
+                  "  const jsonData = pm.response.json();",
+                  "  if (jsonData.success) {",
+                  "    const inviteId = jsonData.data.id;",
+                  "    pm.environment.set('inviteId', inviteId);",
+                  "    console.log('Invite ID saved:', inviteId);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -534,14 +581,47 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"gameType\": \"BLITZ\",\n  \"isPublic\": true\n}"
+              "raw": "{\n  \"playerId\": {{player2Id}},\n  \"gameType\": \"BLITZ\"\n}"
             },
-            "url": "{{baseUrl}}/api/games"
+            "url": "{{baseUrl}}/api/games/invite"
           },
           "response": []
         },
         {
-          "name": "3️⃣ Join Game",
+          "name": "3️⃣ Check Received Invites",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{player2Token}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api/games/invites"
+          },
+          "response": []
+        },
+        {
+          "name": "4️⃣ Accept Invite & Create Game",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// Сохраняем ID созданной игры",
+                  "if (pm.response.code === 200) {",
+                  "  const jsonData = pm.response.json();",
+                  "  if (jsonData.success) {",
+                  "    const gameId = jsonData.data.id;",
+                  "    pm.environment.set('gameId', gameId);",
+                  "    console.log('Game ID saved:', gameId);",
+                  "  }",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -550,12 +630,12 @@
                 "value": "Bearer {{player2Token}}"
               }
             ],
-            "url": "{{baseUrl}}/api/games/{{gameId}}/join"
+            "url": "{{baseUrl}}/api/games/invites/{{inviteId}}/accept"
           },
           "response": []
         },
         {
-          "name": "4️⃣ Make First Move",
+          "name": "5️⃣ Make First Move",
           "request": {
             "method": "POST",
             "header": [
@@ -577,7 +657,7 @@
           "response": []
         },
         {
-          "name": "5️⃣ Get Game State",
+          "name": "6️⃣ Get Game State",
           "request": {
             "method": "GET",
             "header": [
@@ -587,6 +667,33 @@
               }
             ],
             "url": "{{baseUrl}}/api/games/{{gameId}}"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚡ WebSocket Tests",
+      "item": [
+        {
+          "name": "🔄 Connect to WebSocket",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// WebSocket тесты - для ручного тестирования",
+                  "console.log('WebSocket endpoint: ' + pm.environment.get('baseUrl').replace('http', 'ws') + '/chess-websocket');"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/chess-websocket",
+            "description": "Проверка доступности WebSocket endpoint"
           },
           "response": []
         }

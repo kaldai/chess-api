@@ -6,6 +6,7 @@ import com.chess.api.model.enums.GameResult;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.model.enums.GameType;
 import com.chess.api.model.enums.InviteStatus;
+import com.chess.api.repository.GameInviteRepository;
 import com.chess.api.repository.GameRepository;
 import com.chess.api.repository.MoveRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class GameService {
 
   private final GameRepository gameRepository;
   private final MoveRepository moveRepository;
+  private final GameInviteRepository gameInviteRepository;
   private final PlayerService playerService;
 
   @Transactional
@@ -163,106 +165,181 @@ public class GameService {
   }
 
   @Transactional
-  public Game invitePlayer(GameInviteRequest inviteRequest, Player sender) {
+  public GameInvite invitePlayer(GameInviteRequest inviteRequest, Player sender) {
     Player receiver = playerService.getPlayerById(inviteRequest.getPlayerId());
 
     if (sender.equals(receiver)) {
       throw new RuntimeException("Нельзя пригласить самого себя");
     }
 
-    // Создаем игру
-    Game game = new Game();
-    game.setWhitePlayer(sender);
-    game.setBlackPlayer(receiver);
-    game.setGameType(inviteRequest.getGameType());
-    game.setStatus(GameStatus.WAITING);
+    // Проверяем, есть ли уже активное приглашение
+    boolean existingInvite = gameInviteRepository.existsBySenderAndReceiverAndStatus(
+        sender, receiver, InviteStatus.PENDING);
 
-    if (inviteRequest.getTimeControl() != null && inviteRequest.getTimeIncrement() != null) {
-      game.setTimeControl(inviteRequest.getTimeControl());
-      game.setTimeIncrement(inviteRequest.getTimeIncrement());
-    } else {
-      game.setTimeControl(inviteRequest.getGameType().getBaseTime());
-      game.setTimeIncrement(inviteRequest.getGameType().getIncrement());
+    if (existingInvite) {
+      throw new RuntimeException("Приглашение уже отправлено этому игроку");
     }
 
-    game.setWhiteTimeLeft(game.getTimeControl() * 1000);
-    game.setBlackTimeLeft(game.getTimeControl() * 1000);
-    game.setCreatedAt(LocalDateTime.now());
+    // Создаем приглашение
+    GameInvite invite = new GameInvite();
+    invite.setSender(sender);
+    invite.setReceiver(receiver);
+    invite.setGameType(inviteRequest.getGameType());
+    invite.setStatus(InviteStatus.PENDING);
 
-    // Можно добавить GameInvite сущность, но для простоты используем статус WAITING
+    if (inviteRequest.getTimeControl() != null && inviteRequest.getTimeIncrement() != null) {
+      invite.setTimeControl(inviteRequest.getTimeControl());
+      invite.setTimeIncrement(inviteRequest.getTimeIncrement());
+    } else {
+      invite.setTimeControl(inviteRequest.getGameType().getBaseTime());
+      invite.setTimeIncrement(inviteRequest.getGameType().getIncrement());
+    }
+
+    invite.setSentAt(LocalDateTime.now());
+    invite.setExpiresAt(LocalDateTime.now().plusDays(7)); // Приглашение истекает через 7 дней
+
     log.info("Приглашение отправлено от {} к {} на игру {}",
         sender.getUsername(), receiver.getUsername(), inviteRequest.getGameType());
 
-    return gameRepository.save(game);
+    return gameInviteRepository.save(invite);
   }
 
   public List<GameInviteDTO> getPlayerInvites(Player player) {
-    // Поиск игр, где игрок является черными и игра в статусе WAITING
-    List<Game> waitingGames = gameRepository.findByStatus(GameStatus.WAITING);
-    List<GameInviteDTO> invites = new ArrayList<>();
+    // Получаем все приглашения, где игрок является получателем и статус PENDING
+    List<GameInvite> invites = gameInviteRepository.findByReceiverAndStatus(
+        player, InviteStatus.PENDING);
 
-    for (Game game : waitingGames) {
-      if (game.getBlackPlayer() != null && game.getBlackPlayer().equals(player)) {
-        GameInviteDTO invite = new GameInviteDTO();
-        invite.setId(game.getId());
-        invite.setSender(new PlayerDTO(
-            game.getWhitePlayer().getId(),
-            game.getWhitePlayer().getUsername(),
-            getRatingForGameType(game.getWhitePlayer(), game.getGameType())
-        ));
-        invite.setReceiver(new PlayerDTO(
-            game.getBlackPlayer().getId(),
-            game.getBlackPlayer().getUsername(),
-            getRatingForGameType(game.getBlackPlayer(), game.getGameType())
-        ));
-        invite.setGameType(game.getGameType());
-        invite.setStatus(InviteStatus.PENDING);
-        invite.setTimeControl(game.getTimeControl());
-        invite.setTimeIncrement(game.getTimeIncrement());
-        invite.setSentAt(game.getCreatedAt());
-        invite.setGameId(game.getId());
+    List<GameInviteDTO> inviteDTOs = new ArrayList<>();
 
-        invites.add(invite);
-      }
+    for (GameInvite invite : invites) {
+      GameInviteDTO dto = new GameInviteDTO();
+      dto.setId(invite.getId());
+      dto.setSender(new PlayerDTO(
+          invite.getSender().getId(),
+          invite.getSender().getUsername(),
+          getRatingForGameType(invite.getSender(), invite.getGameType())
+      ));
+      dto.setReceiver(new PlayerDTO(
+          invite.getReceiver().getId(),
+          invite.getReceiver().getUsername(),
+          getRatingForGameType(invite.getReceiver(), invite.getGameType())
+      ));
+      dto.setGameType(invite.getGameType());
+      dto.setStatus(invite.getStatus());
+      dto.setTimeControl(invite.getTimeControl());
+      dto.setTimeIncrement(invite.getTimeIncrement());
+      dto.setSentAt(invite.getSentAt());
+      dto.setRespondedAt(invite.getRespondedAt());
+      dto.setGameId(invite.getGame() != null ? invite.getGame().getId() : null);
+
+      inviteDTOs.add(dto);
     }
 
-    return invites;
+    return inviteDTOs;
+  }
+
+  public List<GameInviteDTO> getSentInvites(Player player) {
+    // Получаем все приглашения, которые игрок отправил
+    List<GameInvite> sentInvites = gameInviteRepository.findBySenderAndStatus(
+        player, InviteStatus.PENDING);
+
+    return sentInvites.stream()
+        .map(invite -> new GameInviteDTO(
+            invite.getId(),
+            new PlayerDTO(
+                invite.getSender().getId(),
+                invite.getSender().getUsername(),
+                getRatingForGameType(invite.getSender(), invite.getGameType())
+            ),
+            new PlayerDTO(
+                invite.getReceiver().getId(),
+                invite.getReceiver().getUsername(),
+                getRatingForGameType(invite.getReceiver(), invite.getGameType())
+            ),
+            invite.getGameType(),
+            invite.getStatus(),
+            invite.getTimeControl(),
+            invite.getTimeIncrement(),
+            invite.getSentAt(),
+            invite.getRespondedAt(),
+            invite.getGame() != null ? invite.getGame().getId() : null
+        ))
+        .toList();
   }
 
   @Transactional
   public Game acceptInvite(Long inviteId, Player player) {
-    Game game = getGameById(inviteId);
+    GameInvite invite = gameInviteRepository.findByIdAndReceiver(inviteId, player)
+        .orElseThrow(() -> new RuntimeException("Приглашение не найдено или не для вас"));
 
-    if (!game.getStatus().equals(GameStatus.WAITING)) {
+    if (!invite.getStatus().equals(InviteStatus.PENDING)) {
       throw new RuntimeException("Приглашение уже обработано");
     }
 
-    if (!game.getBlackPlayer().equals(player)) {
-      throw new RuntimeException("Это приглашение не для вас");
+    // Проверяем, не истекло ли приглашение
+    if (invite.getExpiresAt() != null && invite.getExpiresAt().isBefore(LocalDateTime.now())) {
+      invite.setStatus(InviteStatus.EXPIRED);
+      gameInviteRepository.save(invite);
+      throw new RuntimeException("Приглашение истекло");
     }
 
+    // Создаем игру на основе приглашения
+    Game game = new Game();
+    game.setWhitePlayer(invite.getSender());
+    game.setBlackPlayer(invite.getReceiver());
+    game.setGameType(invite.getGameType());
     game.setStatus(GameStatus.ACTIVE);
+    game.setTimeControl(invite.getTimeControl());
+    game.setTimeIncrement(invite.getTimeIncrement());
+    game.setWhiteTimeLeft(game.getTimeControl() * 1000);
+    game.setBlackTimeLeft(game.getTimeControl() * 1000);
+    game.setCreatedAt(LocalDateTime.now());
     game.setStartedAt(LocalDateTime.now());
 
-    log.info("Приглашение {} принято игроком {}", inviteId, player.getUsername());
-    return gameRepository.save(game);
+    Game savedGame = gameRepository.save(game);
+
+    // Обновляем приглашение
+    invite.setStatus(InviteStatus.ACCEPTED);
+    invite.setRespondedAt(LocalDateTime.now());
+    invite.setGame(savedGame);
+    gameInviteRepository.save(invite);
+
+    log.info("Приглашение {} принято игроком {}. Игра {} создана",
+        inviteId, player.getUsername(), savedGame.getId());
+
+    return savedGame;
   }
 
   @Transactional
   public void rejectInvite(Long inviteId, Player player) {
-    Game game = getGameById(inviteId);
+    GameInvite invite = gameInviteRepository.findByIdAndReceiver(inviteId, player)
+        .orElseThrow(() -> new RuntimeException("Приглашение не найдено или не для вас"));
 
-    if (!game.getStatus().equals(GameStatus.WAITING)) {
+    if (!invite.getStatus().equals(InviteStatus.PENDING)) {
       throw new RuntimeException("Приглашение уже обработано");
     }
 
-    if (!game.getBlackPlayer().equals(player)) {
-      throw new RuntimeException("Это приглашение не для вас");
+    invite.setStatus(InviteStatus.REJECTED);
+    invite.setRespondedAt(LocalDateTime.now());
+    gameInviteRepository.save(invite);
+
+    log.info("Приглашение {} отклонено игроком {}", inviteId, player.getUsername());
+  }
+
+  @Transactional
+  public void cancelInvite(Long inviteId, Player player) {
+    GameInvite invite = gameInviteRepository.findByIdAndSender(inviteId, player)
+        .orElseThrow(() -> new RuntimeException("Приглашение не найдено или вы не отправитель"));
+
+    if (!invite.getStatus().equals(InviteStatus.PENDING)) {
+      throw new RuntimeException("Приглашение уже обработано, нельзя отменить");
     }
 
-    // Удаляем игру или помечаем как отклоненную
-    gameRepository.delete(game);
-    log.info("Приглашение {} отклонено игроком {}", inviteId, player.getUsername());
+    invite.setStatus(InviteStatus.CANCELLED);
+    invite.setRespondedAt(LocalDateTime.now());
+    gameInviteRepository.save(invite);
+
+    log.info("Приглашение {} отменено отправителем {}", inviteId, player.getUsername());
   }
 
   public List<Game> getActiveGames(Player player) {
