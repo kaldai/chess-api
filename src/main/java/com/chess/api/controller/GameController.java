@@ -13,8 +13,9 @@ import com.chess.api.model.GameInvite;
 import com.chess.api.model.Player;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.service.ChessGameService;
-import com.chess.api.service.GameService;
+import com.chess.api.service.impl.GameServiceImpl;
 import com.chess.api.service.PlayerService;
+import com.chess.api.exception.IllegalMoveException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -38,7 +39,7 @@ import java.util.List;
 @Slf4j
 public class GameController {
 
-  private final GameService gameService;
+  private final GameServiceImpl gameService;
   private final ChessGameService chessGameService;
   private final PlayerService playerService;
 
@@ -114,7 +115,7 @@ public class GameController {
       Game game = gameService.getGameById(id);
       var move = chessGameService.makeMove(game, currentPlayer, moveRequest);
       return ResponseEntity.ok(ApiResponse.success("Ход принят", convertToDTO(move)));
-    } catch (ChessGameService.IllegalMoveException e) {
+    } catch (IllegalMoveException e) {
       return ResponseEntity.badRequest().body(ApiResponse.error(e.getMessage()));
     }
   }

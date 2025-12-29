@@ -2,7 +2,7 @@ package com.chess.api.config;
 
 import com.chess.api.security.JwtAuthenticationFilter;
 import com.chess.api.security.JwtUtils;
-import com.chess.api.service.PlayerService;
+import com.chess.api.service.impl.PlayerServiceImpl;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -22,10 +22,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
   private final JwtUtils jwtUtils;
-  private final PlayerService playerService;
+  private final PlayerServiceImpl playerService;
 
   // Убираем @Autowired с полей, используем конструктор
-  public SecurityConfig(JwtUtils jwtUtils, PlayerService playerService) {
+  public SecurityConfig(JwtUtils jwtUtils, PlayerServiceImpl playerService) {
     this.jwtUtils = jwtUtils;
     this.playerService = playerService;
   }
