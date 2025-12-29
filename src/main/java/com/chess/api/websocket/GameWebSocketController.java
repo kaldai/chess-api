@@ -8,7 +8,7 @@ import com.chess.api.model.Player;
 import com.chess.api.model.enums.GameResult;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.service.ChessGameService;
-import com.chess.api.service.impl.GameServiceImpl;
+import com.chess.api.service.GameService;
 import com.chess.api.service.PlayerService;
 import com.chess.api.exception.IllegalMoveException;
 import lombok.AllArgsConstructor;
@@ -33,7 +33,7 @@ import java.util.Map;
 public class GameWebSocketController {
 
   private final ChessGameService chessGameService;
-  private final GameServiceImpl gameService;
+  private final GameService gameService;
   private final PlayerService playerService;
   private final SimpMessagingTemplate messagingTemplate;
 

@@ -13,7 +13,7 @@ import com.chess.api.model.GameInvite;
 import com.chess.api.model.Player;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.service.ChessGameService;
-import com.chess.api.service.impl.GameServiceImpl;
+import com.chess.api.service.GameService;
 import com.chess.api.service.PlayerService;
 import com.chess.api.exception.IllegalMoveException;
 import jakarta.validation.Valid;
@@ -39,7 +39,7 @@ import java.util.List;
 @Slf4j
 public class GameController {
 
-  private final GameServiceImpl gameService;
+  private final GameService gameService;
   private final ChessGameService chessGameService;
   private final PlayerService playerService;
 

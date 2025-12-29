@@ -8,6 +8,7 @@ import com.chess.api.model.Player;
 import com.chess.api.model.enums.GameResult;
 import com.chess.api.model.enums.GameStatus;
 import com.chess.api.service.ChessGameService;
+import com.chess.api.service.GameService;
 import com.chess.api.service.GameTimer;
 import com.github.bhlangonijr.chesslib.Board;
 import com.github.bhlangonijr.chesslib.Piece;
@@ -34,9 +35,9 @@ public class ChessGameServiceImpl implements ChessGameService {
 
   private final ConcurrentHashMap<Long, GameTimer> gameTimers = new ConcurrentHashMap<>();
   private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(10);
-  private final GameServiceImpl gameService;
+  private final GameService gameService;
 
-  public ChessGameServiceImpl(GameServiceImpl gameService) {
+  public ChessGameServiceImpl(GameService gameService) {
     this.gameService = gameService;
   }
 
